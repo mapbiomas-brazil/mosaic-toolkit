@@ -1,5 +1,13 @@
 /**
- * 
+ * @name mapbiomas-mosaic-toolkit-raisg
+ *
+ * @author
+ *  1. João Siqueira
+ *  2. Marcos Rosa
+ *  3. Mapbiomas Team
+ *
+ * @version
+ *  1.0.0 | 2020-02-04 | First release.
  */
 var bns = require('users/mapbiomas/mapbiomas-mosaics:modules/BandNames.js');
 var csm = require('users/mapbiomas/mapbiomas-mosaics:modules/CloudAndShadowMasking.js');

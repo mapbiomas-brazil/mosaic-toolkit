@@ -1,5 +1,5 @@
 /**
- * @name mapbiomas-mosaic-toolkit
+ * @name mapbiomas-mosaic-toolkit-grids
  * 
  * @author
  *  1. João Siqueira
