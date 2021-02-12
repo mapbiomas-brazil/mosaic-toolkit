@@ -7,9 +7,10 @@
  *  3. Mapbiomas Team
  * 
  * @version
- *  1.0.0 | 2020-02-04 | First release
+ *  1.0.0 | 2020-02-04 | First release.
  *  1.1.0 | 2020-05-08 | Update thumbnails and improve mosaic logic.
  *  1.1.1 | 2021-02-01 | Fix minor bugs.
+ *  1.1.2 | 2021-02-11 | Use grids.
  */
 var bns = require('users/mapbiomas/mapbiomas-mosaics:modules/BandNames.js');
 var csm = require('users/mapbiomas/mapbiomas-mosaics:modules/CloudAndShadowMasking.js');
@@ -36,7 +37,7 @@ var projectInfo = [
         label: 'Brazil',
         value: {
             projectName: 'mapbiomas-brazil',
-            outputAsset: 'projects/mapbiomas-workspace/MOSAICOS/workspace-c5',
+            outputAsset: 'projects/nexgenmap/MapBiomas2/LANDSAT/mosaics-revised',
             regionsAsset: 'projects/mapbiomas-workspace/AUXILIAR/RASTER/regions',
             regionsList: [
                 'AMAZONIA',
@@ -98,7 +99,11 @@ var App = {
 
         mosaic: null,
 
-        pathRow: '224078',
+        version: 1,
+
+        gridName: 'SH-21-Z-B',
+
+        cloudCover: 100,
 
         region: null,
 
@@ -107,7 +112,7 @@ var App = {
         buffer: 500,
 
         assets: {
-            'pathRow': 'projects/mapbiomas-workspace/AUXILIAR/landsat-scenes'
+            'grids': 'projects/mapbiomas-workspace/AUXILIAR/cartas',
         },
 
         projectInfo: null,
@@ -153,14 +158,14 @@ var App = {
             'Landsat-8 SR': [
                 'LANDSAT/LC08/C01/T1_SR'
             ],
-            'Landsat-5 SR [+L7]': [
-                'LANDSAT/LT05/C01/T1_SR',
-                'LANDSAT/LE07/C01/T1_SR'
-            ],
-            'Landsat-7 SR [+L5]': [
-                'LANDSAT/LE07/C01/T1_SR',
-                'LANDSAT/LT05/C01/T1_SR'
-            ],
+            // 'Landsat-5 SR [+L7]': [
+            //     'LANDSAT/LT05/C01/T1_SR',
+            //     'LANDSAT/LE07/C01/T1_SR'
+            // ],
+            // 'Landsat-7 SR [+L5]': [
+            //     'LANDSAT/LE07/C01/T1_SR',
+            //     'LANDSAT/LT05/C01/T1_SR'
+            // ],
 
         },
 
@@ -221,7 +226,7 @@ var App = {
 
     loadFeatures: function () {
 
-        App.options.features = ee.FeatureCollection(App.options.assets.pathRow);
+        App.options.features = ee.FeatureCollection(App.options.assets.grids);
 
     },
 
@@ -265,9 +270,8 @@ var App = {
     getGeometries: function () {
 
         App.options.geometry = App.options.features
-            .filterMetadata('WRSPR', 'equals', App.options.pathRow)
-            .geometry()
-            .centroid();
+            .filterMetadata('grid_name', 'equals', App.options.gridName)
+            .geometry();
 
     },
 
@@ -277,7 +281,8 @@ var App = {
             .set('year', App.options.year)
             .set('region', App.options.regionId)
             .set('collection_id', App.options.collectionid)
-            .set('landsat_scene', App.options.pathRow)
+            .set('grid_name', App.options.gridName)
+            .set('cloudCover', App.options.cloudCover)
             .set('black_list', App.options.blackList.join(','))
             .set('image_list', App.options.imageList.join(','));
     },
@@ -291,7 +296,7 @@ var App = {
             'geometry': App.options.geometry,
             'dateStart': App.options.dates.amp.t0,
             'dateEnd': App.options.dates.amp.t1,
-            'cloudCover': 100,
+            'cloudCover': App.options.cloudCover,
         };
 
         var bands = bns.get(App.options.bandIds[collectionid]);
@@ -349,7 +354,7 @@ var App = {
             'percentileWet': 75,
         });
 
-        print(mosaic);
+        // print(mosaic);
 
         // Unmask data with the secondary mosaic (+L5 or +L7)
         if (App.options.collectionIds[App.options.collectionid].length == 2) {
@@ -379,10 +384,12 @@ var App = {
 
         // set mosaic properties
         App.options.mosaic = App.setProperties(App.options.mosaic)
-            .clip(App.options.features
-                .filterMetadata('WRSPR', 'equals', App.options.pathRow)
-                .geometry()
-                .buffer(App.options.buffer)
+            .clip(
+                App.options.features
+                    .filterMetadata('grid_name', 'equals', App.options.gridName)
+                    .geometry()
+                    .buffer(App.options.buffer)
+                    .bounds()
             );
 
     },
@@ -390,18 +397,17 @@ var App = {
     exportMosaic: function () {
 
         var name = [
-            App.options.pathRow,
+            App.options.regionId,
+            App.options.gridName,
             App.options.dates.med.t0.split('-')[0],
-            App.options.regionId
+            App.options.version
         ].join('-');
 
         Export.image.toAsset({
             "image": App.options.mosaic,
             "description": name,
             "assetId": App.options.projectInfo.outputAsset + '/' + name,
-            "region": App.options.features
-                .filterMetadata('WRSPR', 'equals', App.options.pathRow)
-                .geometry(),
+            "region": App.options.geometry.buffer(App.options.buffer).bounds(),
             "scale": 30,
             "maxPixels": 1e13
         });
@@ -573,7 +579,7 @@ var App = {
                 "label": obj.imageName,
                 "value": true,
                 "onChange": App.ui.updateImageList,
-                "disabled": false,
+                // "disabled": false,
                 "style": App.options.thumbnail.labelStyle
             });
 
@@ -655,8 +661,10 @@ var App = {
                 App.ui.form.panelFilterContainer.add(App.ui.form.selectYear);
                 App.ui.form.panelFilterContainer.add(App.ui.form.selectMontht0);
                 App.ui.form.panelFilterContainer.add(App.ui.form.selectMontht1);
-                App.ui.form.panelFilterContainer.add(App.ui.form.labelPathRow);
-                App.ui.form.panelFilterContainer.add(App.ui.form.textPathRow);
+                App.ui.form.panelFilterContainer.add(App.ui.form.labelCloudCover);
+                App.ui.form.panelFilterContainer.add(App.ui.form.textCloudCover);
+                App.ui.form.panelFilterContainer.add(App.ui.form.labelGridName);
+                App.ui.form.panelFilterContainer.add(App.ui.form.textGridName);
                 App.ui.form.panelFilterContainer.add(App.ui.form.buttonFind);
 
                 App.ui.form.panelImagePickerContainer.add(App.ui.form.labelTitle);
@@ -751,8 +759,8 @@ var App = {
                     'Landsat-5 SR',
                     'Landsat-7 SR',
                     'Landsat-8 SR',
-                    'Landsat-5 SR [+L7]',
-                    'Landsat-7 SR [+L5]',
+                    // 'Landsat-5 SR [+L7]',
+                    // 'Landsat-7 SR [+L5]',
                 ],
                 'placeholder': 'Collection',
                 'onChange': function (collectionid) {
@@ -928,17 +936,32 @@ var App = {
                 }
             }),
 
-            labelPathRow: ui.Label({
-                "value": "Path/Row id:",
+            labelCloudCover: ui.Label({
+                "value": "Cloud Cover:",
                 "style": {
                     'stretch': 'horizontal',
                 }
             }),
 
-            textPathRow: ui.Textbox({
-                'placeholder': '112063 (6 numbers)',
+            textCloudCover: ui.Textbox({
+                'placeholder': '100',
                 'onChange': function (text) {
-                    App.options.pathRow = text;
+                    App.options.cloudCover = parseFloat(text);
+                    print(App.options.cloudCover);
+                },
+            }),
+
+            labelGridName: ui.Label({
+                "value": "Grid Name:",
+                "style": {
+                    'stretch': 'horizontal',
+                }
+            }),
+
+            textGridName: ui.Textbox({
+                'placeholder': 'SH-21-Z-B',
+                'onChange': function (text) {
+                    App.options.gridName = text;
                 },
             }),
 

@@ -7,8 +7,9 @@ exports.getNDVI = function (image) {
 	var exp = '( b("nir") - b("red") ) / ( b("nir") + b("red") )';
 
 	var ndvi = image.expression(exp).rename("ndvi")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(ndvi);
 };
@@ -22,8 +23,9 @@ exports.getNDWI = function (image) {
 	var exp = 'float(b("nir") - b("swir1"))/(b("nir") + b("swir1"))';
 
 	var ndwi = image.expression(exp).rename("ndwi")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(ndwi);
 };
@@ -37,8 +39,9 @@ exports.getSAVI = function (image) {
 	var exp = '1.5 * (b("nir") - b("red")) / (0.5 + b("nir") + b("red"))';
 
 	var savi = image.expression(exp).rename("savi")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(savi);
 };
@@ -52,7 +55,8 @@ exports.getPRI = function (image) {
 	var exp = 'float(b("blue") - b("green"))/(b("blue") + b("green"))';
 
 	var pri = image.expression(exp).rename("pri")
-		.multiply(100)
+		.add(1)
+		.multiply(1000)
 		.byte();
 
 	return image.addBands(pri);
@@ -67,8 +71,9 @@ exports.getCAI = function (image) {
 	var exp = 'float( b("swir2") / b("swir1") )';
 
 	var cai = image.expression(exp).rename("cai")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(cai);
 };
@@ -82,8 +87,9 @@ exports.getEVI = function (image) {
 	var exp = '2.5 * ((b("nir") - b("red")) / (b("nir") + 6 * b("red") - 7.5 * b("blue") + 1))';
 
 	var evi = image.expression(exp).rename("evi")
+		.add(1)
 		.multiply(100)
-		.byte();
+		.int16();
 
 	return image.addBands(evi);
 
@@ -98,8 +104,9 @@ exports.getEVI2 = function (image) {
 	var exp = '2.5 * (b("nir") - b("red")) / (b("nir") + (2.4 * b("red")) + 1)';
 
 	var evi2 = image.expression(exp).rename("evi2")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(evi2);
 };
@@ -113,7 +120,7 @@ exports.getHallCover = function (image) {
 	var exp = '( (-b("red") * 0.017) - (b("nir") * 0.007) - (b("swir2") * 0.079) + 5.22 )';
 
 	var hallcover = image.expression(exp).rename("hallcover")
-		.multiply(100);
+		.add(1000);
 
 	return image.addBands(hallcover);
 };
@@ -127,7 +134,7 @@ exports.getHallHeigth = function (image) {
 	var exp = '( (-b("red") * 0.039) - (b("nir") * 0.011) - (b("swir1") * 0.026) + 4.13 )';
 
 	var hallheigth = image.expression(exp).rename("hallheigth")
-		.multiply(100);
+		.add(1000);
 
 	return image.addBands(hallheigth);
 };
@@ -141,8 +148,9 @@ exports.getGCVI = function (image) {
 	var exp = 'b("nir") / b("green") - 1';
 
 	var gcvi = image.expression(exp).rename("gcvi")
-		.multiply(100)
-		.byte();
+		.add(1)
+		.multiply(1000)
+		.int16();
 
 	return image.addBands(gcvi);
 };
