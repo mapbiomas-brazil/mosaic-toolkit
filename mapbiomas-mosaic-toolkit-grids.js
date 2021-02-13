@@ -39,6 +39,7 @@ var projectInfo = [
             projectName: 'mapbiomas-brazil',
             outputAsset: 'projects/nexgenmap/MapBiomas2/LANDSAT/mosaics-revised',
             regionsAsset: 'projects/mapbiomas-workspace/AUXILIAR/RASTER/regions',
+            landsatMaskAsset: 'projects/mapbiomas-workspace/AUXILIAR/landsat-mask',
             regionsList: [
                 'AMAZONIA',
                 'CAATINGA',
@@ -55,6 +56,7 @@ var projectInfo = [
             projectName: 'mapbiomas-indonesia',
             outputAsset: 'projects/mapbiomas-indonesia/MOSAICS/workspace-c1',
             regionsAsset: 'projects/mapbiomas-indonesia/ANCILLARY_DATA/RASTER/regions',
+            landsatMaskAsset: 'projects/mapbiomas-workspace/AUXILIAR/landsat-mask',
             regionsList: [
                 'REGION-100',
                 'REGION-200',
@@ -70,6 +72,7 @@ var projectInfo = [
             projectName: 'mapbiomas-pampa-trinacional',
             outputAsset: 'projects/MapBiomas_Pampa/MOSAICS/workspace-c1',
             regionsAsset: 'projects/mapbiomas-workspace/AUXILIAR/RASTER/regions',
+            landsatMaskAsset: 'projects/mapbiomas-workspace/AUXILIAR/landsat-mask',
             regionsList: [
                 'PAMPA-ARGENTINA',
                 'PAMPA-BRASIL',
@@ -106,6 +109,8 @@ var App = {
         cloudCover: 100,
 
         region: null,
+
+        landsatMask: null,
 
         regionId: null,
 
@@ -385,9 +390,7 @@ var App = {
         // set mosaic properties
         App.options.mosaic = App.setProperties(App.options.mosaic)
             .clip(
-                App.options.features
-                    .filterMetadata('grid_name', 'equals', App.options.gridName)
-                    .geometry()
+                App.options.geometry
                     .buffer(App.options.buffer)
                     .bounds()
             );
@@ -442,6 +445,8 @@ var App = {
                     App.options.regionId = region;
                     App.options.region = ee.Image(
                         App.options.projectInfo.regionsAsset + '/' + App.options.regionId);
+                    App.options.landsatMask = ee.ImageCollection(
+                        App.options.projectInfo.landsatMaskAsset);
 
                 },
                 'placeholder': 'Select a region',
@@ -465,11 +470,33 @@ var App = {
 
         addMosaicToMap: function () {
 
+            App.ui.form.map.clear();
+
             App.ui.form.map.addLayer(App.options.mosaic, {
                 'bands': 'swir1_median,nir_median,red_median',
                 'gain': App.options.visParams.gain,
                 'gamma': App.options.visParams.gamma
             }, 'Mosaic');
+
+            App.ui.form.map.addLayer(
+                ee.FeatureCollection(App.options.geometry).style({
+                    'color': 'ff0000',
+                    'fillColor': 'ff000000',
+                }),
+                {
+                    'opacity': 0.7,
+                }, 'Grid',
+                false
+            );
+
+            App.ui.form.map.addLayer(App.options.landsatMask.sum(), {
+                'min': 0,
+                'max': 4,
+                'palette': 'ffcccc,ff0000',
+                'opacity': 0.2
+            }, 'Scenes',
+                false
+            );
 
             App.ui.form.map.centerObject(App.options.geometry, 9);
 
@@ -598,6 +625,7 @@ var App = {
 
             App.options.imageList = ee.List(
                 App.options.collection
+                    .filterDate(App.options.dates.med.t0, App.options.dates.med.t1)
                     .reduceColumns(ee.Reducer.toList(), ['image_id'])
                     .get('list'));
 
