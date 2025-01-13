@@ -151,17 +151,20 @@ var App = {
         collectionid: '',
 
         collectionIds: {
-            'Landsat-4 SR': [
-                'LANDSAT/LT04/C01/T1_SR'
-            ],
+            // 'Landsat-4 SR': [
+            //     'LANDSAT/LT04/C01/T1_SR'
+            // ],
             'Landsat-5 SR': [
-                'LANDSAT/LT05/C01/T1_SR'
+                'LANDSAT/LT05/C02/T1_SR'
             ],
             'Landsat-7 SR': [
-                'LANDSAT/LE07/C01/T1_SR'
+                'LANDSAT/LE07/C02/T1_SR'
             ],
             'Landsat-8 SR': [
-                'LANDSAT/LC08/C01/T1_SR'
+                'LANDSAT/LC08/C02/T1_SR'
+            ],
+            'Landsat-8 SR': [
+                'LANDSAT/LC08/C02/T1_SR'
             ],
             // 'Landsat-5 SR [+L7]': [
             //     'LANDSAT/LT05/C01/T1_SR',
